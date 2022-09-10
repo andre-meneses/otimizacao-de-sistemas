@@ -62,12 +62,14 @@ def residuo(coeficientes, termos_independentes, solucao):
     return res
 #---------------------------------------------------------------------------------------
 
-# Resolução retroativa: 
-#entrada - Matriz de coeficientes triangular superior A e vetor de termos independentes b.
-#saída - Solução x do sistema
-
 def resolucao_retroativa(coeficientes, termos_independentes):
+    """
+    A partir de uma matriz triangular superior, retornar a solução do sistema por meio da resolução retroativa. 
 
+    @param coeficientes: Matriz triangular superior dos coeficientes
+    @param termos_independentes: Vetor de termoos independentes
+    @Returns Vetor de soluções do sistema
+    """
     solucao = vetor_nulo(len(coeficientes)) 
     ultima_linha = len(coeficientes) - 1
 
@@ -79,27 +81,30 @@ def resolucao_retroativa(coeficientes, termos_independentes):
 
     return solucao 
 
-#Matriz triangular: Transforma uma matriz qualquer em matriz triangular superior
-
 def matriz_triangular(matriz):
-        for i in range(len(matriz) - 1):
-            pivo = matriz[i][i]
+    """Transforma uma matriz qualquer em uma matriz triangular superior
 
-            for j in range(i + 1, len(matriz)):
-                m = matriz[j][i]/pivo
+    @param Matriz de entrada
+    """
+    for i in range(len(matriz) - 1):
+        pivo = matriz[i][i]
 
-                def operacao(x,y):
-                    return x - m*y
+        for j in range(i + 1, len(matriz)):
+            m = matriz[j][i]/pivo
 
-                matriz[j] = operacao_linha(matriz[j],matriz[i],operacao)
-        
-#Método de Gauss: Gera a matriz ampliada, chama a função matriz_triangular,
-#em seguida a função resolução_retroativa.
-#Entrada: Matriz de coeficientes e matriz de termos independentes 
-#Saída: Solução x do sistema
+            def operacao(x,y):
+                return x - m*y
 
+            matriz[j] = operacao_linha(matriz[j],matriz[i],operacao)
+    
 def metodo_gauss(coeficientes, termos_independentes):
-   
+    """
+    Resolve um sistema linear a partir do método de gauss
+
+    @param coeficientes: Matriz de coeficientes
+    @param termos_independentes: Vetor de termos termos_independentes
+    @Returns O vetor de soluções do sistema
+    """
     b = []
     for i in range(len(coeficientes)):
         coeficientes[i].append(termos_independentes[i])
@@ -111,9 +116,16 @@ def metodo_gauss(coeficientes, termos_independentes):
 
     return resolucao_retroativa(coeficientes,b)
 
-#Método auxiliar a ser usado na implementação dos algoritmos de Jacobi e Gauss-Seidel
-
 def metodo_iterativo_aux(coeficientes, termos_independentes, b,d):
+    """
+    Método auxiliar a ser usado para os métodos iterativos de resolução de sistemas lineares
+
+    @param coeficientes: Matriz de coeficientes
+    @param termos_independentes: Vetor de termos independentes
+
+    Os parametros 'b' e 'd' significam alguma coisa nos métodos de Gauss Seidel e de Jacobi, mas já não lembro o que.
+    Por isso que as variáveis devem ter nomes significativo!
+    """
     #Implementação da matriz 'b' e do vetor 'd'
     for i in range(len(coeficientes)):
         b.append([])
@@ -126,6 +138,14 @@ def metodo_iterativo_aux(coeficientes, termos_independentes, b,d):
     
     
 def metodo_gauss_seidel(coeficientes,termos_independentes,solucao):
+    """
+    Método de Gauss-Seidel para a resolução de um sistema de equações lineares
+    
+    @param coeficientes: Matriz de coeficientes
+    @param termos_independentes: Matriz de termos independentes.
+    @param solucao: Solução inicial.
+    @Returns: Vetor de soluções do sistema
+    """
     b = []
     d = []
     nova_solucao = []
@@ -149,12 +169,16 @@ def metodo_gauss_seidel(coeficientes,termos_independentes,solucao):
     else:
         cont += 1
         return metodo_gauss_seidel(coeficientes, termos_independentes, nova_solucao)
-    
-#Método de jacobi:
-#Entrada: Matriz de coeficientes, termos independents, e uma solução inicial
-#saída: Resolução x do sistema 
 
 def jacobi(coeficientes,termos_independentes,solucao):
+    """"
+    Método de Jacobi para a resolução de um sistema de equações lineares
+    
+    @param coeficientes: Matriz de coeficientes
+    @param termos_independentes: Matriz de termos independentes.
+    @param solucao: Solução inicial.
+    @Returns: Vetor de soluções do sistema
+    """"
     b = []
     d = []
     nova_solucao = []
@@ -174,8 +198,13 @@ def jacobi(coeficientes,termos_independentes,solucao):
         cont += 1
         return jacobi(coeficientes, termos_independentes, nova_solucao)
     
-#Decomposição LU
 def decomposicao(coeficientes):
+    """
+    Decomposicão LU de uma matriz
+
+    @param coeficientes: Matriz de coeficientes
+    @return: Matriz trianguglar inferior
+    """
     triangular_inferior = matriz_nula(len(coeficientes), len(coeficientes[0])) 
     
     #Construção das matrizes upper e lower
