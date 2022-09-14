@@ -103,7 +103,7 @@ def metodo_gauss(coeficientes, termos_independentes):
 
     @param coeficientes: Matriz de coeficientes
     @param termos_independentes: Vetor de termos termos_independentes
-    @Returns O vetor de soluções do sistema
+    @Returns vetor de soluções do sistema
     """
     b = []
     for i in range(len(coeficientes)):
@@ -171,14 +171,14 @@ def metodo_gauss_seidel(coeficientes,termos_independentes,solucao):
         return metodo_gauss_seidel(coeficientes, termos_independentes, nova_solucao)
 
 def jacobi(coeficientes,termos_independentes,solucao):
-    """"
+    """
     Método de Jacobi para a resolução de um sistema de equações lineares
     
     @param coeficientes: Matriz de coeficientes
     @param termos_independentes: Matriz de termos independentes.
     @param solucao: Solução inicial.
     @Returns: Vetor de soluções do sistema
-    """"
+    """
     b = []
     d = []
     nova_solucao = []
