@@ -8,8 +8,9 @@ def simplex(matriz,base,objetivo="max"):
     @param matriz: Matriz cuja primeira linha corresponde à função objetivo, e cujas linhas restantes
     correspondem às restrições do problema. 
     @param base: Lista de inteiros, representam a base inicial do problema. 
+    @param objetivo: string, indica que se a otimização é de maximização ou minimização
 
-    @returns 
+    @returns matriz da solução e a base
 
     """
     if objetivo == "min":
