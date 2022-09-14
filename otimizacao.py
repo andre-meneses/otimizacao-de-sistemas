@@ -26,7 +26,7 @@ def simplexMax(matriz, base):
     correspondem às restrições do problema. 
     @param base: Lista de inteiros, representam a base inicial do problema. 
 
-    @returns vetor de soluções. 
+    @returns matriz da solução e base
     """
 
     funcaoObjetivo = np.array(matriz[0])
@@ -44,6 +44,7 @@ def simplexMax(matriz, base):
         matrizPasso = eliminacaoPivotal(matriz,indiceAntigaBase + 1,novaBase)
 
         base[indiceAntigaBase] = novaBase
+        print(gerarTabela(matrizPasso,base))
 
         return simplexMax(matrizPasso,base)
     else:
@@ -72,7 +73,7 @@ def fatorLimitante(matriz,base):
         b = matriz[i][len(matriz[0])-1]
         x = matriz[i][base]
 
-        if x != 0 and b > 0 and x > 0:
+        if x != 0 and b >= 0 and x > 0:
             q.append(b/x)
         else:
             q.append(np.inf)
@@ -103,7 +104,11 @@ def gerarTabela(matriz,base):
 
 if __name__ == '__main__':
     a = [[1,-12,-15,0,0,0,0,0],[0,1,0,1,0,0,0,3],[0,0,1,0,1,0,0,4],[0,1,1,0,0,1,0,6],[0,1,3,0,0,0,1,13]]
-    c = simplexMax(a,[3,4,5,6])
+    #c = simplexMax(a,[3,4,5,6])
 
-    print(gerarTabela(c[0],c[1])) 
+    b = [[1, -2, -3, 0, 0, 0, 0],[0, 1, 0, 1, 0, 0, 3],[0, 0, 1, 0, 1, 0, 4],[0, 1, 3, 0, 0, 1, 12]]
+    d = simplexMax(b,[3,4,5])
+
+
+    print(gerarTabela(d[0],d[1])) 
 
