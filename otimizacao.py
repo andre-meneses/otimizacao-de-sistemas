@@ -15,7 +15,7 @@ def maximize_simplex(matrix, base, objective="max"):
         tuple: A tuple containing the solution matrix and the basis.
     """
     if objective == "min":
-        matrix[0] = [-1 * matrix[0][j] for j in range(len(matrix[0]))]
+        matrix[0] = [-x for x in matrix[0]]
 
     return simplex_maximize(matrix, base)
 
@@ -32,103 +32,110 @@ def simplex_maximize(matrix, base):
         tuple: A tuple containing the solution matrix and the basis.
     """
 
-    objective_function = np.array(matrix[0][:-1])
-    new_base = np.argmin(objective_function)
+    while True:
+        objective_function = np.array(matrix[0][:-1])
+        new_base = np.argmin(objective_function)
 
-    step_matrix = []
+        if objective_function[new_base] >= 0:
+            return matrix, base
 
-    if objective_function[new_base] < 0:
+        limiting_factors = [b / matrix[i][new_base] if matrix[i][new_base] > 0 else np.inf for i, b in enumerate(matrix[1:])]
 
-        limiting_factors = limiting_factor(matrix, new_base)
-
-        index_old_base = np.argmin(limiting_factors)
+        index_old_base = limiting_factors.index(min(limiting_factors))
         old_base = base[index_old_base]
 
-        step_matrix = pivotal_elimination(matrix, index_old_base + 1, new_base)
-
+        matrix = pivotal_elimination(matrix, index_old_base + 1, new_base)
         base[index_old_base] = new_base
-        print(generate_table(step_matrix, base))
-
-        return simplex_maximize(step_matrix, base)
-    else:
-        return matrix, base
+        print(generate_table(matrix, base))
 
 def pivotal_elimination(matrix, old_base_index, new_base):
-    new_matrix = []
+    """
+    Performs pivotal elimination to update the matrix during the simplex method.
 
+    Args:
+        matrix (list of lists): The current matrix.
+        old_base_index (int): Index of the row corresponding to the old basis.
+        new_base (int): Index of the column corresponding to the new basis.
+
+    Returns:
+        list of lists: The updated matrix.
+    """
     pivot = matrix[old_base_index][new_base]
-
     for i in range(len(matrix)):
         if i != old_base_index and matrix[i][new_base] != 0:
             m = matrix[i][new_base] / pivot
-            new_matrix.append([matrix[i][x] - m * matrix[old_base_index][x] for x in range(len(matrix[0]))])
-        else:
-            new_matrix.append(matrix[i])
+            matrix[i] = [x - m * matrix[old_base_index][x] for x in range(len(matrix[0]))]
 
-    return new_matrix
-
-def limiting_factor(matrix, base):
-    q = []
-
-    for i in range(1, len(matrix)):
-
-        b = matrix[i][len(matrix[0]) - 1]
-        x = matrix[i][base]
-
-        if x != 0 and b >= 0 and x > 0:
-            q.append(b / x)
-        else:
-            q.append(np.inf)
-
-    return q
+    return matrix
 
 def generate_table(matrix, base):
-    table = {}
-    table["Base"] = []
+    """
+    Generates a table for the current state of the simplex method.
 
-    for i in range(len(base)):
-        table["Base"].append("x{j}".format(j=base[i]))
+    Args:
+        matrix (list of lists): The current matrix.
+        base (list of integers): The current basis.
 
-    for i in range(len(matrix) - len(base)):
-        table["Base"].insert(0, "---")
+    Returns:
+        pd.DataFrame: A Pandas DataFrame representing the table.
+    """
+    table = {"Base": [f"x{j}" for j in base] + ["---" for _ in range(len(matrix) - len(base))]}
 
     for i in range(len(matrix[0])):
-        if i == 0:
-            column_name = "z"
-        elif i == len(matrix[0]) - 1:
-            column_name = "b"
-        else:
-            column_name = "x{j}".format(j=i)
-
+        column_name = "z" if i == 0 else "b" if i == len(matrix[0]) - 1 else f"x{i}"
         table[column_name] = [matrix[j][i] for j in range(len(matrix))]
 
     return pd.DataFrame(table)
 
 def transportation_matrix(cost_matrix, supply, demand):
-    matrix = []
+    """
+    Constructs the transportation matrix for the transportation problem.
+
+    Args:
+        cost_matrix (list of lists): A matrix representing the costs of transporting from suppliers to demanders.
+        supply (list of integers): A list representing the supply capacities of suppliers.
+        demand (list of integers): A list representing the demand quantities of demanders.
+
+    Returns:
+        list of lists: The transportation matrix.
+    """
+    supply_indices = np.repeat(range(len(supply)), len(demand))
+    demand_indices = np.tile(range(len(demand)), len(supply))
+    matrix = [[cost_matrix[s][d] for s, d in zip(supply_indices, demand_indices)]]
 
     # Objective function
-    matrix.append([1] + [cost_matrix[j][i] for i in range(len(demand)) for j in range(len(supply))] + [0])
+    matrix.append([1] + [0] * (len(supply) * len(demand)) + [0])
 
     # Demand equations
     for i in range(len(demand)):
-        mini = i * len(supply)
-        maxi = mini + len(supply)
-        matrix.append([0] + [1 if mini <= j < maxi else 0 for j in range(len(matrix[0]) - 2)] + [demand[i]])
+        matrix.append([0] if i == 0 else [0] * (i * len(supply)) + [1] + [0] * ((len(demand) - i - 1) * len(supply)) + [0, demand[i]])
 
     # Supply equations
     for i in range(len(supply)):
-        matrix.append([0] + [1 if (j % len(supply)) == i else 0 for j in range(len(matrix[0]) - 2)] + [supply[i]])
+        matrix.append([0] if i == 0 else [0] * i + [1] + [0] * (len(supply) - i - 1) + [0, supply[i]])
 
     return matrix
 
 def canonical_form(matrix, pivots):
-    new_matrix = matrix
+    """
+    Converts the matrix to canonical form using specified pivotal elements.
 
+    Args:
+        matrix (list of lists): The current matrix.
+        pivots (list of tuples): A list of (row, column) tuples specifying pivotal elements.
+
+    Returns:
+        list of lists: The matrix in canonical form.
+    """
     for i, j in pivots:
-        new_matrix = pivotal_elimination(new_matrix, i, j)
+        pivot = matrix[i][j]
+        matrix[i] = [x / pivot for x in matrix[i]]
+        for k in range(len(matrix)):
+            if k != i:
+                factor = matrix[k][j]
+                matrix[k] = [x - factor * y for x, y in zip(matrix[k], matrix[i])]
 
-    return new_matrix
+    return matrix
 
 if __name__ == '__main__':
     # a = [[1,-12,-15,0,0,0,0,0],[0,1,0,1,0,0,0,3],[0,0,1,0,1,0,0,4],[0,1,1,0,0,1,0,6],[0,1,3,0,0,0,1,13]]
