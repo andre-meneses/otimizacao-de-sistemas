@@ -1,132 +1,134 @@
 import numpy as np
 import pandas as pd
 
-def simplex(matriz,base,objetivo="max"):
+def maximize_simplex(matrix, base, objective="max"):
     """
-    Maximiza ou minimiza uma função a partir do método simplex. 
+    Maximizes or minimizes a function using the simplex method.
 
-    @param matriz: Matriz cuja primeira linha corresponde à função objetivo, e cujas linhas restantes
-    correspondem às restrições do problema. 
-    @param base: Lista de inteiros, representam a base inicial do problema. 
-    @param objetivo: string, indica se a otimização é de maximização ou minimização
+    Args:
+        matrix (list of lists): A matrix where the first row corresponds to the objective function,
+            and the remaining rows correspond to the problem's constraints.
+        base (list of integers): A list of integers representing the initial basis of the problem.
+        objective (str): A string indicating whether the optimization is for maximization or minimization.
 
-    @returns matriz da solução e a base
-
+    Returns:
+        tuple: A tuple containing the solution matrix and the basis.
     """
-    if objetivo == "min":
-        matriz[0] = [-1 * matriz[0][j] for j in range(len(matriz[0]))] 
+    if objective == "min":
+        matrix[0] = [-1 * matrix[0][j] for j in range(len(matrix[0]))]
 
-    return simplexMax(matriz,base)
+    return simplex_maximize(matrix, base)
 
-def simplexMax(matriz, base):
+def simplex_maximize(matrix, base):
     """
-    Maximiza uma função a partir do método simplex.
+    Maximizes a function using the simplex method.
 
-    @param matriz: Matriz cuja primeira linha corresponde à função objetivo, e cujas linhas restantes
-    correspondem às restrições do problema. 
-    @param base: Lista de inteiros, representam a base inicial do problema. 
+    Args:
+        matrix (list of lists): A matrix where the first row corresponds to the objective function,
+            and the remaining rows correspond to the problem's constraints.
+        base (list of integers): A list of integers representing the initial basis of the problem.
 
-    @returns matriz da solução e base
+    Returns:
+        tuple: A tuple containing the solution matrix and the basis.
     """
 
-    funcaoObjetivo = np.array(matriz[0][:-1])
-    novaBase = np.argmin(funcaoObjetivo)
+    objective_function = np.array(matrix[0][:-1])
+    new_base = np.argmin(objective_function)
 
-    matrizPasso = []
+    step_matrix = []
 
-    if funcaoObjetivo[novaBase] < 0:
+    if objective_function[new_base] < 0:
 
-        fatoresLimitantes = fatorLimitante(matriz,novaBase)
+        limiting_factors = limiting_factor(matrix, new_base)
 
-        indiceAntigaBase = np.argmin(fatoresLimitantes)
-        antigaBase = base[indiceAntigaBase]
+        index_old_base = np.argmin(limiting_factors)
+        old_base = base[index_old_base]
 
-        matrizPasso = eliminacaoPivotal(matriz,indiceAntigaBase + 1,novaBase)
+        step_matrix = pivotal_elimination(matrix, index_old_base + 1, new_base)
 
-        base[indiceAntigaBase] = novaBase
-        print(gerarTabela(matrizPasso,base))
+        base[index_old_base] = new_base
+        print(generate_table(step_matrix, base))
 
-        return simplexMax(matrizPasso,base)
+        return simplex_maximize(step_matrix, base)
     else:
-        return matriz,base
+        return matrix, base
 
+def pivotal_elimination(matrix, old_base_index, new_base):
+    new_matrix = []
 
-def eliminacaoPivotal(matriz,indiceAntigaBase,novaBase):
-    novaMatriz = []
+    pivot = matrix[old_base_index][new_base]
 
-    pivo = matriz[indiceAntigaBase][novaBase]
-
-    for i in range(len(matriz)):
-        if i != indiceAntigaBase and matriz[i][novaBase] != 0:
-            m = matriz[i][novaBase]/pivo
-            novaMatriz.append([matriz[i][x] - m*matriz[indiceAntigaBase][x] for x in range(len(matriz[0]))])
+    for i in range(len(matrix)):
+        if i != old_base_index and matrix[i][new_base] != 0:
+            m = matrix[i][new_base] / pivot
+            new_matrix.append([matrix[i][x] - m * matrix[old_base_index][x] for x in range(len(matrix[0]))])
         else:
-            novaMatriz.append(matriz[i])
+            new_matrix.append(matrix[i])
 
-    return novaMatriz
+    return new_matrix
 
-def fatorLimitante(matriz,base):
+def limiting_factor(matrix, base):
     q = []
 
-    for i in range(1,len(matriz)):
+    for i in range(1, len(matrix)):
 
-        b = matriz[i][len(matriz[0])-1]
-        x = matriz[i][base]
+        b = matrix[i][len(matrix[0]) - 1]
+        x = matrix[i][base]
 
         if x != 0 and b >= 0 and x > 0:
-            q.append(b/x)
+            q.append(b / x)
         else:
             q.append(np.inf)
 
     return q
 
-def gerarTabela(matriz,base):
-    tabela = {}
-    tabela["Base"] = []
+def generate_table(matrix, base):
+    table = {}
+    table["Base"] = []
 
     for i in range(len(base)):
-        tabela["Base"].append("x{j}".format(j=base[i])) 
+        table["Base"].append("x{j}".format(j=base[i]))
 
-    for i in range(len(matriz) - len(base)):
-        tabela["Base"].insert(0,"---")
+    for i in range(len(matrix) - len(base)):
+        table["Base"].insert(0, "---")
 
-    for i in range(len(matriz[0])):
+    for i in range(len(matrix[0])):
         if i == 0:
-            nomeColuna = "z"
-        elif i == len(matriz[0])-1:
-            nomeColuna = "b"
+            column_name = "z"
+        elif i == len(matrix[0]) - 1:
+            column_name = "b"
         else:
-            nomeColuna = "x{j}".format(j=i)
-        
-        tabela[nomeColuna] = [matriz[j][i] for j in range(len(matriz))]
+            column_name = "x{j}".format(j=i)
 
-    return pd.DataFrame(tabela)
+        table[column_name] = [matrix[j][i] for j in range(len(matrix))]
 
-def matrizTransporte(quadroCusto,oferta,demanda):
-    matriz = []
+    return pd.DataFrame(table)
 
-    # Função objetivo
-    matriz.append([1] + [quadroCusto[j][i] for i in range(len(demanda)) for j in range(len(oferta))] + [0])
+def transportation_matrix(cost_matrix, supply, demand):
+    matrix = []
 
-    #Equações de demanda
-    for i in range(len(demanda)):
-        mini = i*len(oferta)
-        maxi = mini + len(oferta)
-        matriz.append([0] + [1 if mini <= j < maxi else 0 for j in range(len(matriz[0])-2)] + [demanda[i]])        
+    # Objective function
+    matrix.append([1] + [cost_matrix[j][i] for i in range(len(demand)) for j in range(len(supply))] + [0])
 
-    # Equações de oferta
-    for i in range(len(oferta)):
-        matriz.append([0] + [1 if (j % len(oferta)) == i else 0 for j in range(len(matriz[0])-2)] + [oferta[i]])
-    
-    return matriz
+    # Demand equations
+    for i in range(len(demand)):
+        mini = i * len(supply)
+        maxi = mini + len(supply)
+        matrix.append([0] + [1 if mini <= j < maxi else 0 for j in range(len(matrix[0]) - 2)] + [demand[i]])
 
-def formaCanonica(matriz,pivos):
-    novaMatriz = matriz
+    # Supply equations
+    for i in range(len(supply)):
+        matrix.append([0] + [1 if (j % len(supply)) == i else 0 for j in range(len(matrix[0]) - 2)] + [supply[i]])
 
-    for i,j in pivos:
-        novaMatriz = eliminacaoPivotal(novaMatriz,i,j)
+    return matrix
 
-    return novaMatriz
+def canonical_form(matrix, pivots):
+    new_matrix = matrix
+
+    for i, j in pivots:
+        new_matrix = pivotal_elimination(new_matrix, i, j)
+
+    return new_matrix
 
 if __name__ == '__main__':
     # a = [[1,-12,-15,0,0,0,0,0],[0,1,0,1,0,0,0,3],[0,0,1,0,1,0,0,4],[0,1,1,0,0,1,0,6],[0,1,3,0,0,0,1,13]]
